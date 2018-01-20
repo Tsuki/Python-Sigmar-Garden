@@ -1,6 +1,6 @@
 import argparse
 import random
-from enum import Enum
+from enum import Enum, auto
 import os
 
 import itertools
@@ -14,22 +14,30 @@ from PIL import Image
 
 
 class Marble(Enum):
-    none = '-'
-    Salt = 's'
-    Air = 'a'
-    Fire = 'f'
-    Water = 'w'
-    Earth = 'e'
-    Vitae = 'v'
-    Mors = 'm'
-    Quintessence = 'q'
-    Quicksilver = 'Q'
-    Lead = 'L'
-    Tin = 'T'
-    Iron = 'I'
-    Copper = 'C'
-    Silver = 'S'
-    Gold = 'G'
+    none = -1
+    Salt = 0
+    Air = auto()
+    Fire = auto()
+    Water = auto()
+    Earth = auto()
+    Vitae = auto()
+    Mors = auto()
+    Quintessence = auto()
+    Quicksilver = auto()
+    Lead = auto()
+    Tin = auto()
+    Iron = auto()
+    Copper = auto()
+    Silver = auto()
+    Gold = auto()
+
+    def symbol(self):
+        if self.value is self.none.value:
+            return "-"
+        if self.value in range(self.Quicksilver.value, self.Gold.value + 1):
+            return self.name[0].upper()
+        else:
+            return self.name[0].lower()
 
 
 FIELD_X = 1052
@@ -39,6 +47,7 @@ FIELD_DY = 57
 FIELD_SIZE = 6
 
 SCAN_RADIUS = 17
+MARBLE_BY_SYMBOL = dict(zip([Marble.symbol(e) for e in Marble], [e for e in Marble]))
 
 
 class State:
@@ -119,7 +128,7 @@ def sample():
         samples = list(itertools.chain.from_iterable(
             [lines.split() for lines in open(os.path.join("sample", str(i) + ".txt"), "r").readlines()]))
         for j, (pos, symbol) in enumerate(zip(FIELD_POSITIONS, samples)):
-            marble = Marble(symbol)
+            marble = MARBLE_BY_SYMBOL[symbol]
             edge_pixels = edges_at(img, *img_pos(*pos))
             TRAIN_CASES[marble.name].append(set(edge_pixels))
 
@@ -137,13 +146,13 @@ def train():
 
 
 def initMap(img):
-    status = State
+    status = State()
     for pos in FIELD_POSITIONS:
         try_edges = edges_at(img, *img_pos(*pos))
         result = ANN.run(list(map(lambda x: 1.0 if x in try_edges else 0.0, PIXELS_TO_SCAN)))
-        print(pos)
-        print(result)
-        # status.state[pos] =
+        marble = sorted(list(zip(result, [e.name for e in Marble])), reverse=True)[0]
+        status.state[pos] = Marble.symbol(Marble[marble[1]])
+    print(status)
 
 
 def init():
@@ -163,6 +172,7 @@ def init():
 
 
 def main():
+    # print(Marble.symbol(Marble.Fire))
     init()
     initMap(Image.open(os.path.join("sample", "1.png")))
     # print(pixels_to_scan())
