@@ -99,12 +99,8 @@ def img_pos(x, y):
 
 
 def lightness_at(img, x, y):
-    r, g, b, a = img.getpixel((x, y))
-    r = r / 257
-    g = g / 257
-    b = b / 257
-    _max, _min = max([r, g, b]), min([r, g, b])
-    return (_max + _min) / 2
+    _min, _max = img.getpixel((x, y))
+    return _min / _max
 
 
 def edges_at(img, x, y):
@@ -128,7 +124,7 @@ TRAIN_CASES = dict.fromkeys([e.name for e in Marble], [])
 
 def sample():
     for i in range(1, 7):
-        img = Image.open(os.path.join("sample", str(i) + ".png"))
+        img = Image.open(os.path.join("sample", str(i) + ".png")).convert('LA')
         samples = list(itertools.chain.from_iterable(
             [lines.split() for lines in open(os.path.join("sample", str(i) + ".txt"), "r").readlines()]))
         for j, (pos, symbol) in enumerate(zip(FIELD_POSITIONS, samples)):
@@ -175,7 +171,7 @@ def init():
 def main():
     # print(Marble.symbol(Marble.Fire))
     init()
-    initMap(Image.open(os.path.join("sample", "1.png")))
+    initMap(Image.open(os.path.join("sample", "1.png")).convert('LA'))
     # print(pixels_to_scan())
     # print(field_positions())
     # print(img_pos(1, 1))
