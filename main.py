@@ -47,7 +47,7 @@ FIELD_DY = 57
 FIELD_SIZE = 6
 
 SCAN_RADIUS = 17
-MARBLE_BY_SYMBOL = dict(zip([Marble.symbol(e) for e in Marble], [e for e in Marble]))
+MARBLE_BY_SYMBOL = dict(zip([Marble.symbol(e) for e in Marble], [e.name for e in Marble]))
 
 
 class State:
@@ -91,6 +91,7 @@ def pixels_to_scan():
 
 FIELD_POSITIONS = field_positions()
 PIXELS_TO_SCAN = pixels_to_scan()
+ANN = libfann.neural_net()
 
 
 def img_pos(x, y):
@@ -99,6 +100,9 @@ def img_pos(x, y):
 
 def lightness_at(img, x, y):
     r, g, b, a = img.getpixel((x, y))
+    r = r / 257
+    g = g / 257
+    b = b / 257
     _max, _min = max([r, g, b]), min([r, g, b])
     return (_max + _min) / 2
 
@@ -129,11 +133,8 @@ def sample():
             [lines.split() for lines in open(os.path.join("sample", str(i) + ".txt"), "r").readlines()]))
         for j, (pos, symbol) in enumerate(zip(FIELD_POSITIONS, samples)):
             marble = MARBLE_BY_SYMBOL[symbol]
-            edge_pixels = edges_at(img, *img_pos(*pos))
-            TRAIN_CASES[marble.name].append(set(edge_pixels))
-
-
-ANN = libfann.neural_net()
+            edge_pixels = set(edges_at(img, *img_pos(*pos)))
+            TRAIN_CASES[marble] = TRAIN_CASES[marble] + [edge_pixels]
 
 
 def train():
@@ -168,7 +169,7 @@ def init():
         sample()
         ANN.create_standard_array(layer)
         train()
-        ANN.save("network.fann")
+        # ANN.save("network.fann")
 
 
 def main():
