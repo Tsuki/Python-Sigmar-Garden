@@ -7,6 +7,8 @@ import itertools
 import pyautogui
 import pyscreenshot
 import time
+
+import sys
 from fann2 import libfann
 from PIL import Image
 
@@ -39,6 +41,22 @@ FIELD_SIZE = 6
 SCAN_RADIUS = 17
 
 
+class State:
+    # state = dict.fromkeys([e.name for e in Marble], ())
+    state = dict()
+
+    def __str__(self):
+        py = -1
+        for (x, y) in FIELD_POSITIONS:
+            if y != py:
+                if y > 0: sys.stdout.write('\n')
+                sys.stdout.write(" " * abs(y - FIELD_SIZE + 1))
+            sys.stdout.write(self.state.get((x, y), "-"))
+            sys.stdout.write(' ')
+            py = y
+        return ''
+
+
 def field_positions():
     d = FIELD_SIZE - 1
     result = []
@@ -46,7 +64,6 @@ def field_positions():
         for x in range(-d, d + 1):
             if not abs(y - x) > d:
                 result.append((x + d, y + d))
-    print(len(result))
     return result
 
 
@@ -128,6 +145,7 @@ def init():
         print("Load Network from network.fann")
         ANN.create_from_file("network.fann")
     else:
+        sample()
         print("Train Network")
         ANN.create_standard_array(layer)
         print(ANN)
@@ -136,11 +154,11 @@ def init():
 
 
 def main():
+    init()
+    print(State())
     # print(pixels_to_scan())
     # print(field_positions())
     # print(img_pos(1, 1))
-    sample()
-    init()
     pass
 
 
