@@ -1,4 +1,5 @@
 import argparse
+import random
 from enum import Enum
 import os
 
@@ -87,8 +88,9 @@ def edges_at(img, x, y):
         _neigh = list(map(neigh, [(-1, 0), (0, -1), (1, 0), (0, 1)]))
         _max, _min = max(_neigh), min(_neigh)
         return -(_max - _min)
+
     result = sorted(PIXELS_TO_SCAN, key=sorting)
-    return result[:int(len(result)/4)]
+    return result[:int(len(result) / 4)]
 
 
 TRAIN_CASES = dict.fromkeys([e.name for e in Marble], [])
@@ -104,11 +106,33 @@ def sample():
             edge_pixels = edges_at(img, *img_pos(*pos))
             TRAIN_CASES[marble.name].append(set(edge_pixels))
 
-def ann():
-    if os.path.isfile("network.fann"):
-        train_data = libfann.training_data()
-        train_data.read_train_from_file(os.path.join("network.fann"))
-        return libfann.neural_net()
+
+ANN = libfann.neural_net()
+
+
+def train():
+    for i in range(len(FIELD_POSITIONS * 15)):
+        marble = random.choice([e.name for e in Marble])
+        edge_pixels = random.choice(TRAIN_CASES[marble])
+        a = list(map(lambda x: 1.0 if x in edge_pixels else 0.0, PIXELS_TO_SCAN))
+        b = list(map(lambda x: 1.0 if marble is x else 0.0, [e.name for e in Marble]))
+        ANN.train(a, b)
+
+
+def init():
+    input_y = [len(PIXELS_TO_SCAN)]
+    hidden_y = [int(len(PIXELS_TO_SCAN) / 2), int(len(PIXELS_TO_SCAN) / 4)]
+    output_y = [len(Marble)]
+    layer = input_y + hidden_y + output_y
+    if os.path.exists("network.fann"):
+        print("Load Network from network.fann")
+        ANN.create_from_file("network.fann")
+    else:
+        print("Train Network")
+        ANN.create_standard_array(layer)
+        print(ANN)
+        train()
+        ANN.save("network.fann")
 
 
 def main():
@@ -116,7 +140,7 @@ def main():
     # print(field_positions())
     # print(img_pos(1, 1))
     sample()
-    # ann()
+    init()
     pass
 
 
