@@ -70,11 +70,28 @@ def img_pos(x, y):
     return FIELD_X + FIELD_DX * (x * 2 - y) / 2, FIELD_Y + FIELD_DY * y
 
 
+def lightness_at(img, x, y):
+    r, g, b, a = img.getpixel((x, y))
+    _max, _min = max([r, g, b]), min([r, g, b])
+    return (_max + _min) / 2
+
+
 def edges_at(img, x, y):
-    pass
+    def sorting(d):
+        dx, dy = d
+
+        def neigh(dd):
+            ddx, ddy = dd
+            return lightness_at(img, x + dx + ddx, y + dy + ddy)
+
+        _neigh = list(map(neigh, [(-1, 0), (0, -1), (1, 0), (0, 1)]))
+        _max, _min = max(_neigh), min(_neigh)
+        return -(_max - _min)
+    result = sorted(PIXELS_TO_SCAN, key=sorting)
+    return result[:int(len(result)/4)]
 
 
-TRAIN_CASES = dict.fromkeys([e.name for e in Marble])
+TRAIN_CASES = dict.fromkeys([e.name for e in Marble], [])
 
 
 def sample():
@@ -84,19 +101,8 @@ def sample():
             [lines.split() for lines in open(os.path.join("sample", str(1) + ".txt"), "r").readlines()]))
         for j, (pos, symbol) in enumerate(zip(FIELD_POSITIONS, samples)):
             marble = Marble(symbol)
-            edge_pixels = edges_at(img, *img_pos(*pos)).to_set
-            TRAIN_CASES[marble.name].append(edge_pixels)
-
-        #   img = StumpyPNG.read("samples/#{i}.png")
-
-
-#   samples = File.read("samples/#{i}.txt").split
-#   FIELD_POSITIONS.zip(samples) do |pos, symbol|
-#     marble = MARBLE_BY_SYMBOL[symbol]
-#     edge_pixels = edges_at(img, *img_pos(*pos)).to_set
-#     TRAIN_CASES[marble] << edge_pixels
-#   end
-# end
+            edge_pixels = edges_at(img, *img_pos(*pos))
+            TRAIN_CASES[marble.name].append(set(edge_pixels))
 
 def ann():
     if os.path.isfile("network.fann"):
