@@ -115,9 +115,9 @@ TRAIN_CASES = dict.fromkeys([e.name for e in Marble], [])
 
 def sample():
     for i in range(1, 7):
-        img = Image.open(os.path.join("sample", str(1) + ".png"))
+        img = Image.open(os.path.join("sample", str(i) + ".png"))
         samples = list(itertools.chain.from_iterable(
-            [lines.split() for lines in open(os.path.join("sample", str(1) + ".txt"), "r").readlines()]))
+            [lines.split() for lines in open(os.path.join("sample", str(i) + ".txt"), "r").readlines()]))
         for j, (pos, symbol) in enumerate(zip(FIELD_POSITIONS, samples)):
             marble = Marble(symbol)
             edge_pixels = edges_at(img, *img_pos(*pos))
@@ -136,6 +136,16 @@ def train():
         ANN.train(a, b)
 
 
+def initMap(img):
+    status = State
+    for pos in FIELD_POSITIONS:
+        try_edges = edges_at(img, *img_pos(*pos))
+        result = ANN.run(list(map(lambda x: 1.0 if x in try_edges else 0.0, PIXELS_TO_SCAN)))
+        print(pos)
+        print(result)
+        # status.state[pos] =
+
+
 def init():
     input_y = [len(PIXELS_TO_SCAN)]
     hidden_y = [int(len(PIXELS_TO_SCAN) / 2), int(len(PIXELS_TO_SCAN) / 4)]
@@ -145,17 +155,16 @@ def init():
         print("Load Network from network.fann")
         ANN.create_from_file("network.fann")
     else:
-        sample()
         print("Train Network")
+        sample()
         ANN.create_standard_array(layer)
-        print(ANN)
         train()
         ANN.save("network.fann")
 
 
 def main():
     init()
-    print(State())
+    initMap(Image.open(os.path.join("sample", "1.png")))
     # print(pixels_to_scan())
     # print(field_positions())
     # print(img_pos(1, 1))
